@@ -48,10 +48,14 @@ class PreCompiler(MixerClass):
     def _write_operand(self, address, parsed):
         type_, value = parsed["type"], parsed["value"]
         if type_ == "register":
-            return 5
+            return 6
         elif type_ == "number":
-            return 65
-
+            if value <= (2**8-1):
+                return 10
+            elif value <= (2**32-1):
+                return 34
+            elif value <= (2**64-1):
+                return 66
     def parse_register(self, operand):
         if not operand.startswith("r"):
             logs.fatal(f"Not a register: {operand} at line {self.line}.")

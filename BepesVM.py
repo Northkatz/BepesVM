@@ -52,9 +52,15 @@ class BepesVM:
 
     def _get_operand_value(self, operand_address):
         if self.memory.read(operand_address, 1):
-            return self.memory.read(operand_address + 1, 64), 65
+            if not self.memory.read(operand_address+1, 1):
+                return self.memory.read(operand_address + 2, 64), 66
+            else:
+                return self.memory.read(operand_address + 2, 32), 34
         else:
-            return self.registers[self.memory.read(operand_address + 1, 4)], 5
+            if self.memory.read(operand_address+1, 1):
+                return self.registers[self.memory.read(operand_address + 2, 4)], 6
+            else:
+                return self.memory.read(operand_address + 2, 8), 10
 
 
     def run(self, code):

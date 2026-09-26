@@ -27,13 +27,22 @@ class BepesVMCompiler(MixerClass):
     def _write_operand(self, address, parsed):
         type_, value = parsed["type"], parsed["value"]
         if type_ == "register":
-            self.temp_mem.allocate(5)
-            self.temp_mem.write(address, 5, (value & 0xF))
-            return 5
+            self.temp_mem.allocate(6)
+            self.temp_mem.write(address, 6, (1 << 4) | (value & 0xF))
+            return 6
         elif type_ == "number":
-            self.temp_mem.allocate(65)
-            self.temp_mem.write(address, 65, (1 << 64) | (value & 0xFFFFFFFFFFFFFFFF))
-            return 65
+            if value <= (2**8-1):
+                self.temp_mem.allocate(10)
+                self.temp_mem.write(address, 10, (value & 0xFF))
+                return 10
+            elif value <= (2**32-1):
+                self.temp_mem.allocate(34)
+                self.temp_mem.write(address, 34, (3 << 32) | (value & 0xFFFFFFFF))
+                return 34
+            elif value <= (2**64-1):
+                self.temp_mem.allocate(66)
+                self.temp_mem.write(address, 66, (1 << 65) | (value & 0xFFFFFFFFFFFFFFFF))
+                return 66
 
     def parse_register(self, operand):
         if operand == "rip":

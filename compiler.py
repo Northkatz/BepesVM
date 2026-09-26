@@ -1,6 +1,8 @@
+import argparse
 from _monstermem import *
 from katzo import logger
 from compilerlibs.precompiler import *
+import pathlib
 
 logs = logger.Logger()
 
@@ -58,8 +60,6 @@ class BepesVMCompiler(MixerClass):
 
         adv_compiler = PreCompiler()
         table = adv_compiler.parse(lines.copy())
-
-        print(table)
 
         self.instruction = 0
         self.line = 1
@@ -154,10 +154,17 @@ class BepesVMCompiler(MixerClass):
 
             self.IP += length
 
-
+parser = argparse.ArgumentParser()
+parser.add_argument("filename")
+parser.add_argument("-o", "--out", default=None)
+args = parser.parse_args()
 
 print("BepASM Compiler")
-compiler = BepesVMCompiler("a.basm")
+compiler = BepesVMCompiler(args.filename)
 compiler.compile()
-print(compiler.temp_mem.memory)
-open("a.bvm", "wb").write(compiler.temp_mem.memory)
+
+out = args.out
+if out is None:
+    out = pathlib.Path(args.filename).stem + ".bvm"
+open(out, "wb").write(compiler.temp_mem.memory)
+

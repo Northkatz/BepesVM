@@ -1,4 +1,5 @@
 from _monstermem import *
+import argparse
 
 mem = MonsterMem()
 mem.allocate(8192)
@@ -105,10 +106,13 @@ class BepesVM:
             self._shuffle_opcodes()
             self.registers[15] += length
 
+parser = argparse.ArgumentParser()
+parser.add_argument("filename")
+args = parser.parse_args()
 
-byt = b'\x7f\x84\x00\x00\x00\x00\x00\x00\x14\xe4f\x10\x00\x00\x00\x00\x00\x00\x00\x1a\xb0\x00\x00\x01\xe4\xc6\x85\x9c\xf6\xd1\x85\xb5\x8bO\x01\xf8`\x00\x00\x00\x00\x00\x00\x0fm\x84\x00\x00\x02\xe1\x8d\x0b9\xed\xa3\x0bk\x14'
-for i,j in enumerate(byt):
-    mem.write(i*8, 8, j)
+with open(args.filename, "rb") as f:
+    for i,j in enumerate(f.read()):
+        mem.write(i * 8, 8, j)
 
 a = BepesVM(mem,{})
 b = a.run(0)

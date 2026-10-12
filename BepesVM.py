@@ -124,7 +124,6 @@ class BepesVM:
 
                 offset = -target if targetsign else target
                 target_ip = IP + offset
-                print(target_ip)
 
                 if self.opcodes[opcode] == 420:
                     if ((self.flags & 1) - sign) & 1:

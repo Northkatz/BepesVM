@@ -11,7 +11,11 @@ opcode_table = {
     "mov": 0,
     "add": 255,
     "sub": 137,
-    "jmp": 29
+    "jmp": 29,
+    "cmp": 54,
+    "jz": 420,
+    "jl": 357,
+    "jg": 360
 }
 init(logs, opcode_table)
 
@@ -154,6 +158,58 @@ class BepesVMCompiler(MixerClass):
                 self.temp_mem.write(self.IP + 9, 4, self.parse_register(args[0]))
                 length += 13
                 length += self._write_operand(self.IP + 13, self.parse_operand(args[1]));
+
+            elif opcode == "cmp":
+                logical_opcode = opcode_table[opcode]
+
+                opcode_num = self.opcodes.index(logical_opcode)
+
+                self.temp_mem.allocate(9)
+                self.temp_mem.write(self.IP, 9, opcode_num)
+
+                length += 9
+                lng1 = self._write_operand(self.IP + 9, self.parse_operand(args[0]))
+                lng2 = self._write_operand(self.IP + 9 + lng1, self.parse_operand(args[1]))
+                length += lng1 + lng2
+
+            elif opcode in ["jnz", "jz", "jl", "jnl", "jg", "jng"]:
+                self.temp_mem.allocate(10)
+                logical_opcode = opcode_table[opcode.replace("n", "")]
+
+                opcode_num = self.opcodes.index(logical_opcode)
+
+                self.temp_mem.write(self.IP, 9, opcode_num)
+                length += 9
+
+                self.temp_mem.write(self.IP + 9, 1, "n" in opcode)
+                length += 1
+
+                if args[0][0] in "+-":
+                    val = self.parse_operand(args[0][1:])["value"]
+                    match args[0][0]:
+                        case "+":
+                            instr = self.instruction + val
+                        case "-":
+                            instr = self.instruction - val
+
+                    target_addr = (table[instr][2] - table[self.instruction][2])  # IP
+                    state = table[instr][0]
+                else:
+                    val = self.parse_operand(args[0])["value"]
+                    target_addr = (table[val][2] - table[self.instruction][2]) # IP
+                    state = table[val][0]
+
+                encoded_offset = (
+                                     (1 << 32) if target_addr < 0 else 0
+                                 ) | abs(target_addr)
+
+                self.temp_mem.allocate(33)
+                self.temp_mem.write(self.IP + 10, 33, encoded_offset)
+                length += 33
+
+                self.temp_mem.allocate(64)
+                self.temp_mem.write(self.IP + 43, 64, state)
+                length += 64
 
 
             self._stage(self.IP ^ self.state ^ opcode_num ^ logical_opcode)

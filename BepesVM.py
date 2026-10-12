@@ -107,6 +107,48 @@ class BepesVM:
 
                 self._shuffle_opcodes()
                 continue
+            elif self.opcodes[opcode] == 54:
+                value, lng = self._get_operand_value(IP + 9)
+                value2, lng2 = self._get_operand_value(IP + 9 + lng)
+
+                self.flags = (value == value2) | ((value < value2) << 1) | ((value > value2) << 2)
+
+                length += 9
+                length += lng + lng2
+
+            elif self.opcodes[opcode] in [420, 357, 360]:
+                sign = self.memory.read(IP + 9, 1)
+                targetsign = self.memory.read(IP + 10, 1)
+                target = self.memory.read(IP + 11, 32)
+                state = self.memory.read(IP + 43, 64)
+
+                offset = -target if targetsign else target
+                target_ip = IP + offset
+                print(target_ip)
+
+                if self.opcodes[opcode] == 420:
+                    if ((self.flags & 1) - sign) & 1:
+                        self.state = state & 0xFFFFFFFFFFFFFFFF
+                        self.registers[15] = target_ip
+                        self._shuffle_opcodes()
+                        continue
+                elif self.opcodes[opcode] == 357:
+                    if (((self.flags >> 1) & 1) - sign) & 1:
+                        self.state = state & 0xFFFFFFFFFFFFFFFF
+                        self.registers[15] = target_ip
+                        self._shuffle_opcodes()
+                        continue
+                elif self.opcodes[opcode] == 360:
+                    if (((self.flags >> 2) & 1) - sign) & 1:
+                        self.state = state & 0xFFFFFFFFFFFFFFFF
+                        self.registers[15] = target_ip
+                        self._shuffle_opcodes()
+                        continue
+
+                length += 107
+
+
+
 
             self._stage(IP ^ self.state ^ self.opcodes[opcode] ^ opcode)
             self._shuffle_opcodes()

@@ -141,6 +141,29 @@ class PreCompiler(MixerClass):
                 length += 13
                 length += self._write_operand(self.IP + 13, self.parse_operand(args[1]));
 
+            elif opcode == "cmp":
+                logical_opcode = opcode_table[opcode]
+
+                opcode_num = self.opcodes.index(logical_opcode)
+
+                length += 9
+                lng1 = self._write_operand(self.IP + 9, self.parse_operand(args[0]))
+                lng2 = self._write_operand(self.IP + 9 + lng1, self.parse_operand(args[1]))
+                length += lng1 + lng2
+            elif opcode in ["jnz", "jz", "jl", "jnl", "jg", "jng"]:
+                if len(args) != 1:
+                    logs.fatal(f"{opcode.upper()} expects 1 operands at line {self.line}.")
+                    exit(-1)
+
+                logical_opcode = opcode_table[opcode.replace("n", "")]
+
+                opcode_num = self.opcodes.index(logical_opcode)
+
+                length += 9
+                length += 1 # invertbit
+                length += 33
+                length += 64
+
             else:
                 logs.fatal(f"Invalid instruction {opcode} at line {self.line}.")
                 exit(-1)
